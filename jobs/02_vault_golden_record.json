@@ -1,0 +1,32 @@
+{
+  "name": "[C360] 02 · Vault — Identity Graph y Golden Record",
+  "description": "Bloqueo, motor de reglas Match-Merge-Survivor, componentes conectados y consolidación del registro único con llave estable (RF-010, RF-011, RF-012).",
+  "tags": { "proyecto": "1531-d1-customer360", "capa": "vault" },
+  "max_concurrent_runs": 1,
+  "tasks": [
+    {
+      "task_key": "golden_record",
+      "notebook_task": {
+        "notebook_path": "../notebooks/02_vault_golden_record.py",
+        "base_parameters": {
+          "catalogo": "${var.catalogo}",
+          "ruta_reglas": "${workspace.file_path}/jobs/reglas_identidad.json"
+        }
+      },
+      "job_cluster_key": "matching",
+      "timeout_seconds": 14400,
+      "max_retries": 2,
+      "min_retry_interval_millis": 300000
+    }
+  ],
+  "job_clusters": [
+    {
+      "job_cluster_key": "matching",
+      "new_cluster": {
+        "spark_version": "15.4.x-scala2.12",
+        "num_workers": "${var.nodos_matching}",
+        "data_security_mode": "SINGLE_USER"
+      }
+    }
+  ]
+}

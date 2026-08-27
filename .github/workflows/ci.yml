@@ -1,0 +1,80 @@
+# CI — corre en cada push y cada pull request.
+# No despliega nada. Responde una sola pregunta: ¿este cambio es desplegable
+# en las DOS nubes?
+name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  jobs_validos:
+    name: Definiciones de job
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Valida los JSON: campos de la Jobs API, dependencias que existen,
+      # clusters declarados y notebooks presentes en el repo.
+      - name: Validar jobs/*.json y generar resources/
+        run: python scripts/build_resources.py --check
+
+      - name: Publicar los recursos generados
+        uses: actions/upload-artifact@v4
+        with:
+          name: resources
+          path: resources/
+
+  reglas_validas:
+    name: Catálogo de reglas de identidad
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validar el catálogo de reglas
+        run: python scripts/validar_reglas.py
+
+  portabilidad:
+    name: Portabilidad entre nubes (RNF-017)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Si alguien escribe una ruta de nube dentro de un notebook, el build
+      # falla. La portabilidad deja de ser una intención y pasa a ser un test.
+      - name: Ningún notebook puede nombrar una nube
+        run: bash scripts/verificar_portabilidad.sh
+
+  bundle:
+    name: Bundle en ambos targets
+    runs-on: ubuntu-latest
+    needs: [jobs_validos]
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [dev, gcp]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: databricks/setup-cli@main
+
+      - name: Generar recursos
+        run: python scripts/build_resources.py
+
+      - name: databricks bundle validate
+        env:
+          DATABRICKS_HOST: ${{ matrix.target == 'dev' && secrets.DATABRICKS_HOST_AZURE || secrets.DATABRICKS_HOST_GCP }}
+          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+        run: databricks bundle validate -t ${{ matrix.target }}

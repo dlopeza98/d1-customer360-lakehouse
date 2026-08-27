@@ -1,0 +1,99 @@
+# Despliegue por promoción de rama.
+#
+#     push a develop  ->  target dev  (Azure Databricks)
+#     push a main     ->  target gcp  (GCP Databricks)
+#
+# El punto para la reunión con infraestructura: promover el POC de Azure a GCP
+# no es un proyecto de migración. Es un merge de develop a main.
+name: Deploy
+
+on:
+  push:
+    branches: [develop, main]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Target al que desplegar
+        required: true
+        type: choice
+        options: [dev, gcp]
+      ejecutar_pipeline:
+        description: Ejecutar el pipeline completo después de desplegar
+        type: boolean
+        default: false
+
+concurrency:
+  # Nunca dos despliegues simultáneos sobre el mismo workspace.
+  group: deploy-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  resolver:
+    name: Resolver destino
+    runs-on: ubuntu-latest
+    outputs:
+      target: ${{ steps.decidir.outputs.target }}
+      nube: ${{ steps.decidir.outputs.nube }}
+    steps:
+      - id: decidir
+        run: |
+          if [ -n "${{ inputs.target }}" ]; then
+            TARGET="${{ inputs.target }}"
+          elif [ "${{ github.ref_name }}" = "main" ]; then
+            TARGET="gcp"
+          else
+            TARGET="dev"
+          fi
+          NUBE=$([ "$TARGET" = "gcp" ] && echo "GCP Databricks" || echo "Azure Databricks")
+          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+          echo "nube=$NUBE"     >> "$GITHUB_OUTPUT"
+          echo "### Destino: $NUBE (target \`$TARGET\`)" >> "$GITHUB_STEP_SUMMARY"
+
+  desplegar:
+    name: Desplegar a ${{ needs.resolver.outputs.nube }}
+    needs: resolver
+    runs-on: ubuntu-latest
+    environment: ${{ needs.resolver.outputs.target }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: databricks/setup-cli@main
+
+      - name: Generar recursos del bundle desde jobs/*.json
+        run: python scripts/build_resources.py --check
+
+      # Este es el paso que redespliega los jobs completos.
+      # El comando es idéntico para las dos nubes; solo cambia el target.
+      - name: databricks bundle deploy
+        env:
+          DATABRICKS_HOST: ${{ needs.resolver.outputs.target == 'dev' && secrets.DATABRICKS_HOST_AZURE || secrets.DATABRICKS_HOST_GCP }}
+          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+        run: databricks bundle deploy -t ${{ needs.resolver.outputs.target }}
+
+      - name: Resumen de lo desplegado
+        env:
+          DATABRICKS_HOST: ${{ needs.resolver.outputs.target == 'dev' && secrets.DATABRICKS_HOST_AZURE || secrets.DATABRICKS_HOST_GCP }}
+          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+        run: |
+          {
+            echo "### Jobs desplegados en ${{ needs.resolver.outputs.nube }}"
+            echo ""
+            echo '```'
+            databricks bundle summary -t ${{ needs.resolver.outputs.target }} || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Ejecutar el pipeline completo
+        if: inputs.ejecutar_pipeline || needs.resolver.outputs.target == 'gcp'
+        env:
+          DATABRICKS_HOST: ${{ needs.resolver.outputs.target == 'dev' && secrets.DATABRICKS_HOST_AZURE || secrets.DATABRICKS_HOST_GCP }}
+          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+        run: databricks bundle run 99_pipeline_completo -t ${{ needs.resolver.outputs.target }}

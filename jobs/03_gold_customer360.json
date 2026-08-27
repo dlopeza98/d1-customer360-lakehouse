@@ -1,0 +1,28 @@
+{
+  "name": "[C360] 03 · Gold — Customer 360, Feature Store y métricas",
+  "description": "Publica la capa de consumo: dim_cliente, cobertura, 8 features con corrección punto-en-tiempo y las métricas certificadas que usa la validación de paridad (RF-015, RF-016, RF-020).",
+  "tags": { "proyecto": "1531-d1-customer360", "capa": "gold" },
+  "max_concurrent_runs": 1,
+  "tasks": [
+    {
+      "task_key": "publicar_gold",
+      "notebook_task": {
+        "notebook_path": "../notebooks/03_gold_customer360.py",
+        "base_parameters": { "catalogo": "${var.catalogo}" }
+      },
+      "job_cluster_key": "estandar",
+      "timeout_seconds": 3600,
+      "max_retries": 1
+    }
+  ],
+  "job_clusters": [
+    {
+      "job_cluster_key": "estandar",
+      "new_cluster": {
+        "spark_version": "15.4.x-scala2.12",
+        "num_workers": 2,
+        "data_security_mode": "SINGLE_USER"
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "name": "[C360] 01 · Silver — normalización y tipificación",
+  "description": "Unifica las 2 fuentes, normaliza los 5 atributos de identidad y tipifica en válida / no identificado / inválida. Ningún registro se descarta (RF-005, RF-007, RF-008).",
+  "tags": { "proyecto": "1531-d1-customer360", "capa": "silver" },
+  "max_concurrent_runs": 1,
+  "tasks": [
+    {
+      "task_key": "tipificar",
+      "notebook_task": {
+        "notebook_path": "../notebooks/01_silver_identidad.py",
+        "base_parameters": { "catalogo": "${var.catalogo}" }
+      },
+      "job_cluster_key": "estandar",
+      "timeout_seconds": 3600,
+      "max_retries": 2,
+      "min_retry_interval_millis": 300000
+    }
+  ],
+  "job_clusters": [
+    {
+      "job_cluster_key": "estandar",
+      "new_cluster": {
+        "spark_version": "15.4.x-scala2.12",
+        "num_workers": 2,
+        "data_security_mode": "SINGLE_USER"
+      }
+    }
+  ]
+}

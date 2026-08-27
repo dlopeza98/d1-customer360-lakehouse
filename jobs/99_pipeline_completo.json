@@ -1,0 +1,61 @@
+{
+  "name": "[C360] 99 · Pipeline completo end-to-end",
+  "description": "Encadena las 4 etapas con dependencias. Es el job que se reejecuta en GCP durante la Fase 8 para producir el Golden Record que se compara contra el de Azure (RF-038).",
+  "tags": { "proyecto": "1531-d1-customer360", "capa": "orquestacion" },
+  "max_concurrent_runs": 1,
+  "tasks": [
+    {
+      "task_key": "t00_datos",
+      "notebook_task": {
+        "notebook_path": "../notebooks/00_generar_datos_sinteticos.py",
+        "base_parameters": {
+          "catalogo": "${var.catalogo}",
+          "n_personas": "${var.n_personas}",
+          "semilla": "1531"
+        }
+      },
+      "job_cluster_key": "pipeline"
+    },
+    {
+      "task_key": "t01_silver",
+      "depends_on": [{ "task_key": "t00_datos" }],
+      "notebook_task": {
+        "notebook_path": "../notebooks/01_silver_identidad.py",
+        "base_parameters": { "catalogo": "${var.catalogo}" }
+      },
+      "job_cluster_key": "pipeline"
+    },
+    {
+      "task_key": "t02_vault",
+      "depends_on": [{ "task_key": "t01_silver" }],
+      "notebook_task": {
+        "notebook_path": "../notebooks/02_vault_golden_record.py",
+        "base_parameters": {
+          "catalogo": "${var.catalogo}",
+          "ruta_reglas": "${workspace.file_path}/jobs/reglas_identidad.json"
+        }
+      },
+      "job_cluster_key": "pipeline",
+      "max_retries": 2
+    },
+    {
+      "task_key": "t03_gold",
+      "depends_on": [{ "task_key": "t02_vault" }],
+      "notebook_task": {
+        "notebook_path": "../notebooks/03_gold_customer360.py",
+        "base_parameters": { "catalogo": "${var.catalogo}" }
+      },
+      "job_cluster_key": "pipeline"
+    }
+  ],
+  "job_clusters": [
+    {
+      "job_cluster_key": "pipeline",
+      "new_cluster": {
+        "spark_version": "15.4.x-scala2.12",
+        "num_workers": "${var.nodos_matching}",
+        "data_security_mode": "SINGLE_USER"
+      }
+    }
+  ]
+}

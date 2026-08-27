@@ -1,0 +1,14 @@
+# Artefacto generado desde jobs/*.json — la fuente de verdad son los JSON
+resources/
+
+# Databricks
+.databricks/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Sistema
+Thumbs.db
+.DS_Store
