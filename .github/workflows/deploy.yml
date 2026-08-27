@@ -64,6 +64,31 @@ jobs:
           python-version: "3.12"
       - uses: databricks/setup-cli@main
 
+      # Un fallo de despliegue por falta de credenciales debe decirlo así, no
+      # esconderse detrás de un error de DNS del CLI.
+      - name: Verificar credenciales
+        env:
+          HOST: ${{ needs.resolver.outputs.target == 'dev' && secrets.DATABRICKS_HOST_AZURE || secrets.DATABRICKS_HOST_GCP }}
+          CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+        run: |
+          faltan=""
+          [ -z "$HOST" ]          && faltan="$faltan DATABRICKS_HOST_(AZURE|GCP)"
+          [ -z "$CLIENT_ID" ]     && faltan="$faltan DATABRICKS_CLIENT_ID"
+          [ -z "$CLIENT_SECRET" ] && faltan="$faltan DATABRICKS_CLIENT_SECRET"
+          if [ -n "$faltan" ]; then
+            {
+              echo "### No se puede desplegar"
+              echo ""
+              echo "Faltan estos secrets del repositorio:"
+              for s in $faltan; do echo "- \`$s\`"; done
+              echo ""
+              echo "Configurarlos en Settings → Secrets and variables → Actions."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::Faltan secrets de Databricks:$faltan"
+            exit 1
+          fi
+
       - name: Generar recursos del bundle desde jobs/*.json
         run: python scripts/build_resources.py --check
 
