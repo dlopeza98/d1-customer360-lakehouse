@@ -15,8 +15,6 @@
     --line-hi: #B3C1CC;
     --uno:     #0B7D7D;
     --uno-bg:  #E3F1F1;
-    --dos:     #A65209;
-    --dos-bg:  #FAEDE0;
     --f-sans: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
     --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
   }
@@ -33,8 +31,6 @@
       --line-hi: #3A4E5C;
       --uno:     #3FBFBF;
       --uno-bg:  #10312F;
-      --dos:     #DFA255;
-      --dos-bg:  #33240F;
     }
   }
 
@@ -49,8 +45,6 @@
     --line-hi: #3A4E5C;
     --uno:     #3FBFBF;
     --uno-bg:  #10312F;
-    --dos:     #DFA255;
-    --dos-bg:  #33240F;
   }
 
   * { box-sizing: border-box; }
@@ -123,7 +117,7 @@
     border-radius: 6px;
     padding: 18px;
   }
-  svg.diagram { display: block; width: 100%; min-width: 900px; height: auto; }
+  svg.diagram { display: block; width: 100%; min-width: 860px; height: auto; }
   figcaption { font-size: 14px; color: var(--muted); max-width: 66ch; }
 
   .s-surface { fill: var(--surface); }
@@ -131,20 +125,20 @@
   .s-line    { stroke: var(--line-hi); }
   .s-uno-bg  { fill: var(--uno-bg); }
   .s-uno     { stroke: var(--uno); }
-  .s-dos-bg  { fill: var(--dos-bg); }
-  .s-dos     { stroke: var(--dos); }
 
   .t      { font-family: var(--f-sans); fill: var(--ink); }
   .t-sub  { font-family: var(--f-sans); fill: var(--muted); }
   .t-mono { font-family: var(--f-mono); fill: var(--ink); }
   .t-msub { font-family: var(--f-mono); fill: var(--muted); }
   .t-uno  { font-family: var(--f-mono); fill: var(--uno); letter-spacing: 0.07em; }
-  .t-dos  { font-family: var(--f-mono); fill: var(--dos); letter-spacing: 0.07em; }
   .t-band { font-family: var(--f-mono); fill: var(--faint); letter-spacing: 0.09em; }
 
-  .arrow     { stroke: var(--line-hi); fill: none; stroke-width: 1.4; }
-  .arrow-uno { stroke: var(--uno);     fill: none; stroke-width: 1.7; }
-  .arrow-dos { stroke: var(--dos);     fill: none; stroke-width: 1.7; }
+  .mark  { fill: var(--ink); }
+  .glifo { fill: none; stroke: var(--muted); stroke-width: 1.7;
+           stroke-linecap: round; stroke-linejoin: round; }
+
+  .arrow     { stroke: var(--line-hi); fill: none; stroke-width: 1.5; }
+  .arrow-uno { stroke: var(--uno);     fill: none; stroke-width: 1.8; }
 
   .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
   table { border-collapse: collapse; width: 100%; font-size: 14.5px; background: var(--surface); }
@@ -161,19 +155,9 @@
   tbody tr:last-child td { border-bottom: none; }
   .igual { color: var(--uno); font-weight: 600; }
 
-  .pasos { display: flex; flex-direction: column; gap: 20px; counter-reset: p; }
-  .paso {
-    display: grid;
-    grid-template-columns: 2.4ch 1fr;
-    gap: 16px;
-    align-items: start;
-  }
-  .paso .n {
-    font-family: var(--f-mono);
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--uno);
-  }
+  .pasos { display: flex; flex-direction: column; gap: 20px; }
+  .paso { display: grid; grid-template-columns: 2.4ch 1fr; gap: 16px; align-items: start; }
+  .paso .n { font-family: var(--f-mono); font-size: 15px; font-weight: 600; color: var(--uno); }
   .paso h3 { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
   .paso p  { font-size: 15px; color: var(--muted); }
   .paso pre {
@@ -191,14 +175,28 @@
   hr { border: none; border-top: 1px solid var(--line); margin: 0; }
 </style>
 
+<!-- Marcas e iconos, embebidos: la página no pide nada a la red. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="ic-databricks" viewBox="0 0 24 24"><path d="M.95 14.184L12 20.403l9.919-5.55v2.21L12 22.662l-10.484-5.96-.565.308v.77L12 24l11.05-6.218v-4.317l-.515-.309L12 19.118l-9.867-5.653v-2.21L12 16.805l11.05-6.218V6.32l-.515-.308L12 11.974 2.647 6.681 12 1.388l7.76 4.368.668-.411v-.566L12 0 .95 6.27v.72L12 13.207l9.919-5.55v2.26L12 15.52 1.516 9.56l-.565.308Z"/></symbol>
+  <symbol id="ic-github" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></symbol>
+  <symbol id="ic-gcp" viewBox="0 0 256 206"><g><path d="M170.2517,56.8186 L192.5047,34.5656 L193.9877,25.1956 C153.4367,-11.6774 88.9757,-7.4964 52.4207,33.9196 C42.2667,45.4226 34.7337,59.7636 30.7167,74.5726 L38.6867,73.4496 L83.1917,66.1106 L86.6277,62.5966 C106.4247,40.8546 139.8977,37.9296 162.7557,56.4286 L170.2517,56.8186 Z" fill="#EA4335"></path><path d="M224.2048,73.9182 C219.0898,55.0822 208.5888,38.1492 193.9878,25.1962 L162.7558,56.4282 C175.9438,67.2042 183.4568,83.4382 183.1348,100.4652 L183.1348,106.0092 C198.4858,106.0092 210.9318,118.4542 210.9318,133.8052 C210.9318,149.1572 198.4858,161.2902 183.1348,161.2902 L127.4638,161.2902 L121.9978,167.2242 L121.9978,200.5642 L127.4638,205.7952 L183.1348,205.7952 C223.0648,206.1062 255.6868,174.3012 255.9978,134.3712 C256.1858,110.1682 244.2528,87.4782 224.2048,73.9182" fill="#4285F4"></path><path d="M71.8704,205.7957 L127.4634,205.7957 L127.4634,161.2897 L71.8704,161.2897 C67.9094,161.2887 64.0734,160.4377 60.4714,158.7917 L52.5844,161.2117 L30.1754,183.4647 L28.2234,191.0387 C40.7904,200.5277 56.1234,205.8637 71.8704,205.7957" fill="#34A853"></path><path d="M71.8704,61.4255 C31.9394,61.6635 -0.2366,94.2275 0.0014,134.1575 C0.1344,156.4555 10.5484,177.4455 28.2234,191.0385 L60.4714,158.7915 C46.4804,152.4705 40.2634,136.0055 46.5844,122.0155 C52.9044,108.0255 69.3704,101.8085 83.3594,108.1285 C89.5244,110.9135 94.4614,115.8515 97.2464,122.0155 L129.4944,89.7685 C115.7734,71.8315 94.4534,61.3445 71.8704,61.4255" fill="#FBBC05"></path></g></symbol>
+  <symbol id="ic-azure" viewBox="0 0 256 242"><defs><linearGradient x1="58.9717389%" y1="7.4114724%" x2="37.1905196%" y2="103.76182%" id="az-g1"><stop stop-color="#114A8B" offset="0%"></stop><stop stop-color="#0669BC" offset="100%"></stop></linearGradient><linearGradient x1="59.7188447%" y1="52.3127289%" x2="52.6914332%" y2="54.8636556%" id="az-g2"><stop stop-color="#000000" stop-opacity="0.3" offset="0%"></stop><stop stop-color="#000000" stop-opacity="0.2" offset="7.1%"></stop><stop stop-color="#000000" stop-opacity="0.1" offset="32.1%"></stop><stop stop-color="#000000" stop-opacity="0.05" offset="62.3%"></stop><stop stop-color="#000000" stop-opacity="0" offset="100%"></stop></linearGradient><linearGradient x1="37.2789399%" y1="4.60005789%" x2="62.4733904%" y2="99.9794963%" id="az-g3"><stop stop-color="#3CCBF4" offset="0%"></stop><stop stop-color="#2892DF" offset="100%"></stop></linearGradient></defs><g><path d="M85.3432536,0.00290931225 L161.095926,0.00290931225 L82.4572158,233.000999 C80.7999506,237.910266 76.1963409,241.216897 71.0148908,241.216897 L12.0605874,241.216897 C8.17631708,241.216897 4.52963465,239.346777 2.26398956,236.191716 C-0.00165554136,233.036655 -0.608845705,228.983428 0.632808896,225.302959 L73.8980192,8.2188071 C75.5546242,3.30737742 80.1599649,0 85.3432536,0 L85.3432536,0.00290931225 Z" fill="url(#az-g1)"></path><path d="M195.422901,156.282432 L75.2973984,156.282432 C73.0119231,156.279908 70.9577304,157.676287 70.1192383,159.802395 C69.2807461,161.928503 69.8287946,164.351151 71.5007459,165.909349 L148.690618,237.955558 C150.937998,240.051977 153.897138,241.216897 156.970521,241.216897 L224.990241,241.216897 L195.422901,156.282432 Z" fill="#0078D4"></path><path d="M85.3432536,0.00282026831 C80.0982223,-0.017218565 75.4499031,3.37677358 73.8718354,8.37881927 L0.722997576,225.105126 C-0.602635687,228.800183 -0.0443562611,232.909431 2.21904685,236.116884 C4.48244996,239.324337 8.16695154,241.227505 12.0925898,241.216941 L72.5684635,241.216941 C77.154039,240.397586 80.9441027,237.174364 82.4892183,232.779891 L97.0765099,189.788984 L149.182292,238.389046 C151.365814,240.195147 154.104928,241.193803 156.938519,241.216941 L224.705129,241.216941 L194.983595,156.282435 L108.341367,156.3028 L161.369401,0.00282026831 L85.3432536,0.00282026831 Z" fill="url(#az-g2)"></path><path d="M182.098251,8.20716985 C180.443985,3.30365177 175.845517,0.00290931225 170.670472,0.00290931225 L86.2451404,0.00290931225 C91.4198966,0.00290931225 96.0178956,3.30421162 97.6729189,8.20716985 L170.941039,225.30005 C172.18363,228.981191 171.576996,233.035501 169.311351,236.191716 C167.045705,239.34793 163.398467,241.219806 159.51326,241.219806 L243.941501,241.219806 C247.826196,241.219806 251.472566,239.346605 253.737531,236.190534 C256.002496,233.034464 256.608798,228.980705 255.366371,225.30005 L182.098251,8.20716985 Z" fill="url(#az-g3)"></path></g></symbol>
+
+  <!-- Glifos por rol. El mismo glifo a los dos lados: mismo papel, distinta implementación. -->
+  <symbol id="g-storage" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.66 3.58 3 8 3s8-1.34 8-3V6"/><path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/></symbol>
+  <symbol id="g-identidad" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20.5c0-3.87 3.13-7 7-7s7 3.13 7 7"/></symbol>
+  <symbol id="g-secreto" viewBox="0 0 24 24"><circle cx="8" cy="12" r="3.6"/><path d="M11.6 12H21"/><path d="M18 12v3.4"/><path d="M15 12v2.2"/></symbol>
+  <symbol id="g-red" viewBox="0 0 24 24"><circle cx="12" cy="4.6" r="2.4"/><circle cx="5" cy="18" r="2.4"/><circle cx="19" cy="18" r="2.4"/><path d="M10.6 6.8L6.3 15.6"/><path d="M13.4 6.8l4.3 8.8"/><path d="M7.4 18h9.2"/></symbol>
+</svg>
+
 <div class="wrap">
 
   <header class="col">
     <p class="eyebrow">1531 · D1 · Customer 360</p>
     <h1>El mismo código en Azure y en GCP</h1>
     <p class="lede">
-      Cómo está armado el demo de portabilidad, y por qué mover el POC de una
-      nube a la otra es un cambio de configuración y no una reescritura.
+      Cómo está armado el POC para que moverlo de una nube a la otra sea un
+      cambio de configuración y no una reescritura.
     </p>
   </header>
 
@@ -210,153 +208,164 @@
       reprovisionar.
     </p>
     <p>
-      En este repositorio esa parte son <strong>dos líneas</strong>, y las dos
-      están en <code>databricks.yml</code>. Las 488 líneas de lógica —
-      notebooks, definición del job, reglas de identidad — no mencionan una
-      nube ni una vez.
+      En este proyecto esa parte son <strong>dos líneas</strong>, y las dos están
+      en <code>databricks.yml</code>. Las 488 líneas de lógica — notebooks,
+      definición del job, reglas de identidad — no mencionan una nube ni una vez.
     </p>
   </section>
 
   <figure>
     <div class="scroller">
-      <svg class="diagram" viewBox="0 0 1320 760" role="img"
-           aria-label="Un repositorio de GitHub alimenta dos workspaces de Databricks. La rama develop despliega a Azure y la rama main a GCP, con el mismo comando de Databricks Asset Bundles. Los notebooks, el job y las reglas de identidad son idénticos en ambos lados; solo cambian el sustrato de almacenamiento y las identidades de la nube.">
+      <svg class="diagram" viewBox="0 0 1200 748" role="img"
+           aria-label="Un repositorio de GitHub con notebooks, jobs y reglas de identidad se despliega a dos nubes. En Azure y en GCP la capa de Databricks con Unity Catalog y Delta Lake es idéntica; lo que se recrea es el sustrato: almacenamiento, identidad, secretos y salida de red.">
         <defs>
           <marker id="a" viewBox="0 0 10 10" refX="9" refY="5"
                   markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 z" fill="var(--line-hi)"/>
           </marker>
-          <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5"
+          <marker id="au" viewBox="0 0 10 10" refX="9" refY="5"
                   markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 z" fill="var(--uno)"/>
           </marker>
-          <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5"
-                  markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-            <path d="M0,0 L10,5 L0,10 z" fill="var(--dos)"/>
-          </marker>
         </defs>
 
-        <!-- ================= EL REPOSITORIO ================= -->
-        <rect x="230" y="18" width="860" height="188" rx="6"
+        <!-- ===================== EL REPOSITORIO ===================== -->
+        <rect x="300" y="16" width="600" height="196" rx="6"
               class="s-uno-bg s-uno" stroke-width="1.4" stroke-dasharray="5 4"/>
-        <text x="254" y="44" class="t-uno" font-size="11.5" font-weight="600">UN SOLO REPOSITORIO · GITHUB</text>
-        <text x="1066" y="44" class="t-uno" font-size="11.5" text-anchor="end">0 referencias de nube</text>
 
-        <rect x="254" y="60" width="196" height="124" rx="4" class="s-surface s-uno" stroke-width="1.1"/>
-        <text x="352" y="90" class="t-mono" font-size="12.5" font-weight="600" text-anchor="middle">notebooks/</text>
-        <text x="352" y="116" class="t-sub" font-size="11.5" text-anchor="middle">01 · genera las</text>
-        <text x="352" y="132" class="t-sub" font-size="11.5" text-anchor="middle">2 fuentes</text>
-        <text x="352" y="154" class="t-sub" font-size="11.5" text-anchor="middle">02 · Golden Record</text>
+        <use href="#ic-github" x="326" y="38" width="22" height="22" class="mark"/>
+        <text x="358" y="55" class="t-mono" font-size="12.5" font-weight="600">Un solo repositorio</text>
+        <text x="874" y="55" class="t-uno" font-size="11" text-anchor="end">0 referencias de nube</text>
 
-        <rect x="474" y="60" width="196" height="124" rx="4" class="s-surface s-uno" stroke-width="1.1"/>
-        <text x="572" y="90" class="t-mono" font-size="12.5" font-weight="600" text-anchor="middle">jobs/</text>
-        <text x="572" y="116" class="t-sub" font-size="11.5" text-anchor="middle">customer360.json</text>
-        <text x="572" y="138" class="t-sub" font-size="11.5" text-anchor="middle">reglas de identidad</text>
-        <text x="572" y="158" class="t-sub" font-size="11.5" text-anchor="middle">fuera del código</text>
+        <rect x="326" y="76" width="176" height="60" rx="4" class="s-surface s-uno" stroke-width="1.1"/>
+        <text x="414" y="100" class="t-mono" font-size="12" font-weight="600" text-anchor="middle">notebooks/</text>
+        <text x="414" y="120" class="t-sub" font-size="11" text-anchor="middle">genera datos · Golden Record</text>
 
-        <rect x="694" y="60" width="196" height="124" rx="4" class="s-surface s-uno" stroke-width="1.1"/>
-        <text x="792" y="90" class="t-mono" font-size="12.5" font-weight="600" text-anchor="middle">scripts/</text>
-        <text x="792" y="116" class="t-sub" font-size="11.5" text-anchor="middle">json → yml del</text>
-        <text x="792" y="132" class="t-sub" font-size="11.5" text-anchor="middle">bundle</text>
-        <text x="792" y="154" class="t-sub" font-size="11.5" text-anchor="middle">test de portabilidad</text>
+        <rect x="512" y="76" width="176" height="60" rx="4" class="s-surface s-uno" stroke-width="1.1"/>
+        <text x="600" y="100" class="t-mono" font-size="12" font-weight="600" text-anchor="middle">jobs/</text>
+        <text x="600" y="120" class="t-sub" font-size="11" text-anchor="middle">definición · reglas de identidad</text>
 
-        <rect x="914" y="60" width="152" height="124" rx="4" class="s-surface s-uno" stroke-width="1.6"/>
-        <text x="990" y="90" class="t-mono" font-size="12" font-weight="600" text-anchor="middle">databricks</text>
-        <text x="990" y="106" class="t-mono" font-size="12" font-weight="600" text-anchor="middle">.yml</text>
-        <text x="990" y="132" class="t-uno" font-size="11" text-anchor="middle" font-weight="600">LA FRONTERA</text>
-        <text x="990" y="154" class="t-sub" font-size="11.5" text-anchor="middle">2 líneas conocen</text>
-        <text x="990" y="169" class="t-sub" font-size="11.5" text-anchor="middle">la nube</text>
+        <rect x="698" y="76" width="176" height="60" rx="4" class="s-surface s-uno" stroke-width="1.1"/>
+        <text x="786" y="100" class="t-mono" font-size="12" font-weight="600" text-anchor="middle">scripts/</text>
+        <text x="786" y="120" class="t-sub" font-size="11" text-anchor="middle">test de portabilidad</text>
 
-        <!-- ================= GITHUB ACTIONS ================= -->
-        <path class="arrow" marker-end="url(#a)" d="M660,206 L660,242"/>
+        <rect x="326" y="148" width="548" height="46" rx="4"
+              class="s-surface s-uno" stroke-width="1.8"/>
+        <text x="346" y="177" class="t-mono" font-size="12.5" font-weight="600">databricks.yml</text>
+        <text x="854" y="177" class="t-uno" font-size="11" text-anchor="end">LA FRONTERA · 2 líneas conocen la nube</text>
 
-        <rect x="420" y="244" width="480" height="72" rx="5" class="s-sunk s-line" stroke-width="1.2"/>
-        <text x="660" y="272" class="t-mono" font-size="12.5" font-weight="600" text-anchor="middle">GitHub Actions</text>
-        <text x="660" y="296" class="t-sub" font-size="12" text-anchor="middle">valida · genera los recursos · despliega el bundle</text>
+        <!-- ===================== BIFURCACIÓN ===================== -->
+        <path class="arrow" d="M600,212 L600,248"/>
+        <path class="arrow-uno" marker-end="url(#au)" d="M600,248 L310,248 L310,296"/>
+        <path class="arrow-uno" marker-end="url(#au)" d="M600,248 L890,248 L890,296"/>
 
-        <!-- ramas -->
-        <path class="arrow-uno" marker-end="url(#a1)" d="M420,280 L300,280 L300,392"/>
-        <path class="arrow-dos" marker-end="url(#a2)" d="M900,280 L1020,280 L1020,392"/>
+        <text x="302" y="278" class="t-msub" font-size="11.5" text-anchor="end">deploy -t azure</text>
+        <text x="898" y="278" class="t-msub" font-size="11.5">deploy -t gcp</text>
 
-        <text x="292" y="322" class="t-uno" font-size="12" text-anchor="end" font-weight="600">rama develop</text>
-        <text x="292" y="342" class="t-msub" font-size="11">deploy -t azure</text>
-        <text x="1030" y="322" class="t-dos" font-size="12" font-weight="600">rama main</text>
-        <text x="1030" y="342" class="t-msub" font-size="11">deploy -t gcp</text>
+        <!-- ===================== AZURE ===================== -->
+        <rect x="60" y="298" width="500" height="404" rx="6" class="s-surface s-line" stroke-width="1.2"/>
+        <use href="#ic-azure" x="84" y="316" width="26" height="25"/>
+        <text x="122" y="336" class="t" font-size="15" font-weight="600">Azure</text>
+        <text x="536" y="336" class="t-sub" font-size="11" text-anchor="end">ejecución del POC</text>
+        <line x1="84" y1="352" x2="536" y2="352" class="s-line" stroke-width="1"/>
 
-        <text x="660" y="352" class="t-sub" font-size="12.5" text-anchor="middle" font-style="italic">promover entre nubes = merge de develop a main</text>
+        <rect x="84" y="366" width="452" height="106" rx="5"
+              class="s-uno-bg s-uno" stroke-width="1.3"/>
+        <use href="#ic-databricks" x="104" y="388" width="22" height="22" class="mark"/>
+        <text x="136" y="405" class="t" font-size="13" font-weight="600">Databricks</text>
+        <text x="104" y="432" class="t-sub" font-size="11.5">Unity Catalog · Delta Lake · Spark</text>
+        <text x="104" y="454" class="t-msub" font-size="11.5">d1_customer360.bronze.facturacion</text>
 
-        <!-- ================= AZURE ================= -->
-        <rect x="40" y="394" width="580" height="308" rx="6" class="s-surface s-line" stroke-width="1.2"/>
-        <text x="64" y="422" class="t-band" font-size="11.5" font-weight="600">AZURE</text>
-        <text x="596" y="422" class="t-sub" font-size="11.5" text-anchor="end">nube de ejecución del POC</text>
-        <line x1="64" y1="434" x2="596" y2="434" class="s-line" stroke-width="1"/>
+        <text x="84" y="500" class="t-band" font-size="10.5" font-weight="600">SE RECREA</text>
 
-        <rect x="64" y="450" width="532" height="86" rx="4" class="s-uno-bg s-uno" stroke-width="1.2"/>
-        <text x="80" y="474" class="t-mono" font-size="12" font-weight="600">Databricks · Unity Catalog · Delta Lake</text>
-        <text x="80" y="496" class="t-sub" font-size="11.5">Job [C360] Customer 360 · 2 tareas encadenadas</text>
-        <text x="80" y="518" class="t-msub" font-size="11.5">d1_customer360.bronze.facturacion</text>
+        <rect x="84" y="512" width="452" height="42" rx="4" class="s-sunk"/>
+        <use href="#g-storage" x="102" y="522" width="21" height="21" class="glifo"/>
+        <text x="136" y="539" class="t" font-size="12.5">ADLS Gen2</text>
+        <text x="518" y="539" class="t-sub" font-size="11" text-anchor="end">almacenamiento</text>
 
-        <rect x="64" y="552" width="256" height="60" rx="4" class="s-sunk"/>
-        <text x="80" y="576" class="t" font-size="12.5">ADLS Gen2</text>
-        <text x="80" y="596" class="t-sub" font-size="11.5">almacenamiento</text>
+        <rect x="84" y="560" width="452" height="42" rx="4" class="s-sunk"/>
+        <use href="#g-identidad" x="102" y="570" width="21" height="21" class="glifo"/>
+        <text x="136" y="587" class="t" font-size="12.5">Access Connector</text>
+        <text x="518" y="587" class="t-sub" font-size="11" text-anchor="end">identidad</text>
 
-        <rect x="340" y="552" width="256" height="60" rx="4" class="s-sunk"/>
-        <text x="356" y="576" class="t" font-size="12.5">Access Connector</text>
-        <text x="356" y="596" class="t-sub" font-size="11.5">identidad administrada</text>
+        <rect x="84" y="608" width="452" height="42" rx="4" class="s-sunk"/>
+        <use href="#g-secreto" x="102" y="618" width="21" height="21" class="glifo"/>
+        <text x="136" y="635" class="t" font-size="12.5">Key Vault</text>
+        <text x="518" y="635" class="t-sub" font-size="11" text-anchor="end">secretos</text>
 
-        <rect x="64" y="626" width="256" height="56" rx="4" class="s-sunk"/>
-        <text x="80" y="650" class="t" font-size="12.5">Key Vault</text>
-        <text x="80" y="669" class="t-sub" font-size="11.5">secretos</text>
+        <rect x="84" y="656" width="452" height="42" rx="4" class="s-sunk"/>
+        <use href="#g-red" x="102" y="666" width="21" height="21" class="glifo"/>
+        <text x="136" y="683" class="t" font-size="12.5">NAT Gateway + IP fija</text>
+        <text x="518" y="683" class="t-sub" font-size="11" text-anchor="end">salida de red</text>
 
-        <rect x="340" y="626" width="256" height="56" rx="4" class="s-sunk"/>
-        <text x="356" y="650" class="t" font-size="12.5">NAT Gateway + IP fija</text>
-        <text x="356" y="669" class="t-sub" font-size="11.5">salida a Internet</text>
+        <!-- ===================== GCP ===================== -->
+        <rect x="640" y="298" width="500" height="404" rx="6" class="s-surface s-line" stroke-width="1.2"/>
+        <use href="#ic-gcp" x="664" y="318" width="27" height="22"/>
+        <text x="702" y="336" class="t" font-size="15" font-weight="600">Google Cloud</text>
+        <text x="1116" y="336" class="t-sub" font-size="11" text-anchor="end">destino</text>
+        <line x1="664" y1="352" x2="1116" y2="352" class="s-line" stroke-width="1"/>
 
-        <!-- ================= GCP ================= -->
-        <rect x="700" y="394" width="580" height="308" rx="6" class="s-surface s-line" stroke-width="1.2"/>
-        <text x="724" y="422" class="t-band" font-size="11.5" font-weight="600">GCP</text>
-        <text x="1256" y="422" class="t-sub" font-size="11.5" text-anchor="end">nube de destino</text>
-        <line x1="724" y1="434" x2="1256" y2="434" class="s-line" stroke-width="1"/>
+        <rect x="664" y="366" width="452" height="106" rx="5"
+              class="s-uno-bg s-uno" stroke-width="1.3"/>
+        <use href="#ic-databricks" x="684" y="388" width="22" height="22" class="mark"/>
+        <text x="716" y="405" class="t" font-size="13" font-weight="600">Databricks</text>
+        <text x="684" y="432" class="t-sub" font-size="11.5">Unity Catalog · Delta Lake · Spark</text>
+        <text x="684" y="454" class="t-msub" font-size="11.5">d1_customer360.bronze.facturacion</text>
 
-        <rect x="724" y="450" width="532" height="86" rx="4" class="s-uno-bg s-uno" stroke-width="1.2"/>
-        <text x="740" y="474" class="t-mono" font-size="12" font-weight="600">Databricks · Unity Catalog · Delta Lake</text>
-        <text x="740" y="496" class="t-sub" font-size="11.5">Job [C360] Customer 360 · 2 tareas encadenadas</text>
-        <text x="740" y="518" class="t-msub" font-size="11.5">d1_customer360.bronze.facturacion</text>
+        <text x="664" y="500" class="t-band" font-size="10.5" font-weight="600">SE RECREA</text>
 
-        <rect x="724" y="552" width="256" height="60" rx="4" class="s-sunk"/>
-        <text x="740" y="576" class="t" font-size="12.5">Cloud Storage</text>
-        <text x="740" y="596" class="t-sub" font-size="11.5">almacenamiento</text>
+        <rect x="664" y="512" width="452" height="42" rx="4" class="s-sunk"/>
+        <use href="#g-storage" x="682" y="522" width="21" height="21" class="glifo"/>
+        <text x="716" y="539" class="t" font-size="12.5">Cloud Storage</text>
+        <text x="1098" y="539" class="t-sub" font-size="11" text-anchor="end">almacenamiento</text>
 
-        <rect x="1000" y="552" width="256" height="60" rx="4" class="s-dos-bg s-dos" stroke-width="1.2"/>
-        <text x="1016" y="576" class="t" font-size="12.5">Service Account</text>
-        <text x="1016" y="596" class="t-sub" font-size="11.5">la genera Databricks</text>
+        <rect x="664" y="560" width="452" height="42" rx="4" class="s-sunk"/>
+        <use href="#g-identidad" x="682" y="570" width="21" height="21" class="glifo"/>
+        <text x="716" y="587" class="t" font-size="12.5">Service Account</text>
+        <text x="1098" y="587" class="t-sub" font-size="11" text-anchor="end">identidad</text>
 
-        <rect x="724" y="626" width="256" height="56" rx="4" class="s-sunk"/>
-        <text x="740" y="650" class="t" font-size="12.5">Secret Manager</text>
-        <text x="740" y="669" class="t-sub" font-size="11.5">secretos</text>
+        <rect x="664" y="608" width="452" height="42" rx="4" class="s-sunk"/>
+        <use href="#g-secreto" x="682" y="618" width="21" height="21" class="glifo"/>
+        <text x="716" y="635" class="t" font-size="12.5">Secret Manager</text>
+        <text x="1098" y="635" class="t-sub" font-size="11" text-anchor="end">secretos</text>
 
-        <rect x="1000" y="626" width="256" height="56" rx="4" class="s-sunk"/>
-        <text x="1016" y="650" class="t" font-size="12.5">Cloud NAT + IP</text>
-        <text x="1016" y="669" class="t-sub" font-size="11.5">salida a Internet</text>
+        <rect x="664" y="656" width="452" height="42" rx="4" class="s-sunk"/>
+        <use href="#g-red" x="682" y="666" width="21" height="21" class="glifo"/>
+        <text x="716" y="683" class="t" font-size="12.5">Cloud NAT + IP</text>
+        <text x="1098" y="683" class="t-sub" font-size="11" text-anchor="end">salida de red</text>
 
-        <!-- banda de identidad: idéntico arriba, distinto abajo -->
-        <text x="660" y="500" class="t-uno" font-size="11.5" text-anchor="middle" font-weight="600">IDÉNTICO</text>
-        <text x="660" y="580" class="t-band" font-size="11.5" text-anchor="middle">se recrea</text>
+        <!-- ===================== EL EJE ===================== -->
+        <text x="600" y="415" class="t-uno" font-size="11" text-anchor="middle" font-weight="600">IDÉNTICO</text>
+        <path class="arrow-uno" d="M552,424 L588,424" stroke-dasharray="3 3"/>
+        <path class="arrow-uno" d="M612,424 L648,424" stroke-dasharray="3 3"/>
       </svg>
     </div>
     <figcaption>
-      Arriba, lo que se despliega: un repositorio que no sabe en qué nube va a
-      correr. Abajo, lo que se recrea: almacenamiento, identidad, secretos y
-      salida de red. La banda de Databricks es la misma a ambos lados —
-      <strong>mismo producto, misma API, mismos nombres de tabla</strong> — y por
-      eso el job no cambia.
+      Un repositorio arriba; abajo, las dos nubes. La banda de Databricks es la
+      misma a los dos lados — mismo producto, misma API, los mismos nombres de
+      tabla — y por eso el job no cambia. Lo que se recrea son cuatro piezas de
+      sustrato, y cada una tiene su equivalente exacto en la otra nube.
     </figcaption>
   </figure>
 
   <hr>
 
   <section class="col">
-    <h2>El demo, en cuatro movimientos</h2>
+    <h2>Por qué el código no necesita saber dónde corre</h2>
+    <p>
+      Los notebooks nunca escriben una ruta de almacenamiento. Direccionan las
+      tablas por nombre de tres niveles — <code>catálogo.esquema.tabla</code> —
+      y Unity Catalog resuelve dónde vive físicamente cada una: en Azure apunta
+      a ADLS Gen2, en GCP a Cloud Storage.
+    </p>
+    <p>
+      Esa indirección es lo que hace posible todo lo demás. Sin ella, cada
+      notebook tendría una ruta escrita a mano y migrar sería reescribir.
+    </p>
+  </section>
+
+  <section class="col">
+    <h2>El demo, en tres movimientos</h2>
   </section>
 
   <div class="pasos">
@@ -375,11 +384,11 @@
     <div class="paso">
       <span class="n">2</span>
       <div>
-        <h3>Abrir un notebook</h3>
+        <h3>Abrir un notebook y buscar una ruta</h3>
         <p>
-          Busca <code>abfss</code> delante de ellos. Cero resultados. Las
-          tablas se direccionan por <code>catálogo.esquema.tabla</code> y Unity
-          Catalog resuelve dónde viven.
+          Busca <code>abfss</code> delante de ellos. Cero resultados. Después
+          abre <code>databricks.yml</code>: dos targets, un host cada uno. Eso es
+          todo lo que separa una nube de la otra.
         </p>
       </div>
     </div>
@@ -387,25 +396,13 @@
     <div class="paso">
       <span class="n">3</span>
       <div>
-        <h3>Mostrar la frontera</h3>
+        <h3>Desplegar en la otra nube</h3>
         <p>
-          Abre <code>databricks.yml</code>. Dos targets, un host cada uno. Eso
-          es todo lo que separa una nube de la otra.
+          El mismo comando, distinto target. Se redespliega el job completo sin
+          editar un solo notebook.
         </p>
         <pre>databricks bundle deploy -t azure
 databricks bundle deploy -t gcp</pre>
-      </div>
-    </div>
-
-    <div class="paso">
-      <span class="n">4</span>
-      <div>
-        <h3>Promover</h3>
-        <p>
-          Merge de <code>develop</code> a <code>main</code>. El workflow resuelve
-          el destino solo y redespliega el job completo en la otra nube. No se
-          edita un notebook.
-        </p>
       </div>
     </div>
   </div>
@@ -419,7 +416,7 @@ databricks bundle deploy -t gcp</pre>
   <div class="tablewrap">
     <table>
       <thead>
-        <tr><th>Azure</th><th>GCP</th></tr>
+        <tr><th>Azure</th><th>Google Cloud</th></tr>
       </thead>
       <tbody>
         <tr><td>ADLS Gen2</td><td>Cloud Storage</td></tr>
@@ -440,10 +437,21 @@ databricks bundle deploy -t gcp</pre>
       <strong>La flecha apunta al revés.</strong>
     </p>
     <p>
-      Portar el Terraform con el modelo mental de Azure produce un resultado que
-      parece correcto y no lo es: una identidad con permisos que Databricks no
-      usa, y una identidad sin permisos que sí usa. Vale la pena mencionarlo — es
-      el tipo de cosa que un equipo de infraestructura reconoce al vuelo.
+      Portar la infraestructura con el modelo mental de Azure produce un
+      resultado que parece correcto y no lo es: una identidad con permisos que
+      Databricks no usa, y una identidad sin permisos que sí usa. Vale la pena
+      mencionarlo — es el tipo de detalle que un equipo de infraestructura
+      reconoce al vuelo.
+    </p>
+  </section>
+
+  <section class="col">
+    <h2>Alcance</h2>
+    <p>
+      El aprovisionamiento del POC es <strong>manual y documentado</strong>. La
+      propuesta excluye explícitamente Infraestructura como Código y pipeline de
+      CI/CD: son alcance de proyecto, no de POC. Lo que se entrega es el
+      repositorio versionado en GitHub.
     </p>
   </section>
 
