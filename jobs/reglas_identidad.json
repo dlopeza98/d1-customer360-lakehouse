@@ -1,87 +1,55 @@
 {
   "_comentario": [
-    "Catalogo de reglas de identidad — RF-011, RF-013, RNF-011.",
-    "Las condiciones son expresiones Spark SQL evaluadas sobre el DataFrame de",
-    "pares candidatos, cuyas columnas son <atributo>_a y <atributo>_b.",
-    "Desactivar una regla es poner 'activa': false y reejecutar el job 02.",
-    "NO requiere desplegar codigo: eso es Golden Code Management (RF-013).",
-    "Este archivo migra a GCP como un archivo mas del repositorio."
+    "Reglas de identidad. Viven fuera del codigo a proposito: cambiar el",
+    "matching no es cambiar el notebook, y este archivo viaja a GCP como un",
+    "archivo mas del repositorio.",
+    "",
+    "Las condiciones son expresiones Spark SQL sobre el DataFrame de pares",
+    "candidatos, cuyas columnas son <atributo>_a y <atributo>_b.",
+    "",
+    "El 'rank' define quien gana si dos reglas resuelven el mismo par. No",
+    "puede haber dos con el mismo rank: el resultado dependeria del orden de",
+    "las filas, que Spark no garantiza, y el Golden Record dejaria de ser",
+    "reproducible entre corridas — y sin eso, comparar Azure contra GCP no",
+    "significa nada."
   ],
   "version": "v1",
-  "vigente_desde": "2026-08-27",
   "reglas": [
     {
       "id": "R01",
       "rank": 1,
       "activa": true,
       "descripcion": "Cedula identica tras normalizar",
-      "condicion": "cedula_norm_a = cedula_norm_b",
-      "umbral": 1.0
+      "condicion": "cedula_norm_a = cedula_norm_b"
     },
     {
       "id": "R02",
       "rank": 2,
       "activa": true,
-      "descripcion": "Correo identico y bien formado",
-      "condicion": "correo_norm_a = correo_norm_b AND correo_norm_a IS NOT NULL AND correo_norm_a RLIKE '^[^@]+@[^@]+\\\\.[a-z]{2,}$'",
-      "umbral": 1.0
+      "descripcion": "Correo identico",
+      "condicion": "correo_norm_a = correo_norm_b AND correo_norm_a IS NOT NULL"
     },
     {
       "id": "R03",
       "rank": 3,
       "activa": true,
-      "descripcion": "Un digito distinto en la cedula y nombre casi identico",
-      "condicion": "levenshtein(cedula_norm_a, cedula_norm_b) <= 1 AND nombre_norm_a != '' AND levenshtein(nombre_norm_a, nombre_norm_b) <= 2",
-      "umbral": 0.92
+      "descripcion": "Telefono identico y mismo primer nombre",
+      "condicion": "telefono_norm_a = telefono_norm_b AND telefono_norm_a != '' AND split(nombre_norm_a, ' ')[0] = split(nombre_norm_b, ' ')[0]"
     },
     {
       "id": "R04",
       "rank": 4,
       "activa": true,
-      "descripcion": "Telefono identico y fecha de nacimiento identica",
-      "condicion": "telefono_norm_a = telefono_norm_b AND telefono_norm_a IS NOT NULL AND fecha_nac_a = fecha_nac_b",
-      "umbral": 1.0
+      "descripcion": "Un digito distinto en la cedula y nombre casi identico",
+      "condicion": "levenshtein(cedula_norm_a, cedula_norm_b) <= 1 AND nombre_norm_a != '' AND levenshtein(nombre_norm_a, nombre_norm_b) <= 2"
     },
     {
       "id": "R05",
       "rank": 5,
-      "activa": true,
-      "descripcion": "Cedula con digitos transpuestos y mismo primer nombre",
-      "condicion": "length(cedula_norm_a) = length(cedula_norm_b) AND levenshtein(cedula_norm_a, cedula_norm_b) = 2 AND split(nombre_norm_a, ' ')[0] = split(nombre_norm_b, ' ')[0] AND nombre_norm_a != ''",
-      "umbral": 0.90
-    },
-    {
-      "id": "R06",
-      "rank": 6,
-      "activa": true,
-      "descripcion": "Nombre exacto y telefono exacto",
-      "condicion": "nombre_norm_a = nombre_norm_b AND nombre_norm_a != '' AND telefono_norm_a = telefono_norm_b AND telefono_norm_a IS NOT NULL",
-      "umbral": 0.95
-    },
-    {
-      "id": "R07",
-      "rank": 7,
-      "activa": true,
-      "descripcion": "Similitud fonetica de nombre con telefono coincidente",
-      "condicion": "soundex(split(nombre_norm_a, ' ')[0]) = soundex(split(nombre_norm_b, ' ')[0]) AND telefono_norm_a = telefono_norm_b AND telefono_norm_a IS NOT NULL",
-      "umbral": 0.88
-    },
-    {
-      "id": "R08",
-      "rank": 8,
-      "activa": true,
-      "descripcion": "Usuario de correo coincidente con nombre casi identico",
-      "condicion": "split(correo_norm_a, '@')[0] = split(correo_norm_b, '@')[0] AND correo_norm_a IS NOT NULL AND levenshtein(nombre_norm_a, nombre_norm_b) <= 3",
-      "umbral": 0.93
-    },
-    {
-      "id": "R09",
-      "rank": 9,
       "activa": false,
-      "descripcion": "Solo similitud de nombre y fecha de nacimiento",
-      "condicion": "levenshtein(nombre_norm_a, nombre_norm_b) <= 2 AND fecha_nac_a = fecha_nac_b",
-      "umbral": 0.85,
-      "motivo_desactivacion": "Genera falsos positivos entre homonimos. Revisar en el ciclo de calibracion 2 con negocio."
+      "descripcion": "Solo similitud de nombre",
+      "condicion": "levenshtein(nombre_norm_a, nombre_norm_b) <= 2 AND nombre_norm_a != ''",
+      "motivo_desactivacion": "Une homonimos distintos. Es el ejemplo para mostrar en vivo que activar una regla no requiere desplegar codigo."
     }
   ]
 }

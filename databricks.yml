@@ -1,17 +1,17 @@
 # ===========================================================================
 # Databricks Asset Bundle · 1531 D1 — Customer 360 & Golden Record
 #
-# Un solo bundle, dos targets. Los notebooks, los jobs y el catálogo de reglas
-# son los mismos; lo único que cambia entre nubes es el bloque `targets` de
-# abajo.
+# ESTE ES EL ARCHIVO DEL DEMO.
 #
-# Los jobs NO se definen aquí: viven en jobs/*.json con la forma nativa de la
-# Jobs API, y scripts/build_resources.py los convierte a resources/*.yml antes
-# de cada deploy. Esa carpeta es artefacto generado y está en .gitignore.
+# Todo el proyecto — notebooks, jobs, reglas de identidad — es agnóstico de
+# nube. La única conciencia de dónde corre está en el bloque `targets` de
+# abajo: dos líneas, una por nube.
 #
-# Promoción por rama (ver .github/workflows/deploy.yml):
-#     develop  ->  target dev   (Azure Databricks)
-#     main     ->  target gcp   (GCP Databricks)
+# Mover el POC de Azure a GCP es cambiar el target:
+#     databricks bundle deploy -t azure
+#     databricks bundle deploy -t gcp
+#
+# O, en el pipeline: hacer merge de develop a main.
 # ===========================================================================
 
 bundle:
@@ -19,42 +19,33 @@ bundle:
 
 variables:
   catalogo:
-    description: Catálogo de Unity Catalog del dominio Cliente (RF-029).
+    description: Catálogo de Unity Catalog del dominio Cliente.
     default: d1_customer360
 
   n_personas:
-    description: Tamaño del universo sintético de personas a generar.
-    default: "20000"
+    description: Tamaño del universo sintético.
+    default: "5000"
 
-  nodos_matching:
-    description: Nodos del cluster de resolución de identidad (RNF-003).
-    default: 3
+  nodos:
+    description: Nodos del cluster.
+    default: 2
 
 targets:
-  # --- Nube de EJECUCIÓN del POC (financiada por el programa Microsoft) -----
-  dev:
+  # --- Nube de EJECUCIÓN del POC -------------------------------------------
+  azure:
     default: true
     mode: development
     workspace:
       host: https://adb-0000000000000000.0.azuredatabricks.net
-      root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
-    variables:
-      catalogo: d1_customer360_dev
 
   # --- Nube de DESTINO · Fase 8 --------------------------------------------
-  # `databricks bundle deploy -t gcp` recrea los 4 jobs completos.
-  # No se edita un solo notebook.
   gcp:
-    mode: production
+    mode: development
     workspace:
       host: https://0000000000000000.0.gcp.databricks.com
-      root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
-    variables:
-      catalogo: d1_customer360
-      nodos_matching: 4
 
-# El host real de cada workspace se inyecta con DATABRICKS_HOST desde los
-# secrets de GitHub Actions, para no versionar URLs de workspaces del cliente.
+# Los hosts reales se inyectan con DATABRICKS_HOST desde los secrets de
+# GitHub Actions: no se versionan URLs de workspaces del cliente.
 
 include:
   - resources/*.yml

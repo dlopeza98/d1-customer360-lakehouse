@@ -1,85 +1,97 @@
-# D1 · Customer 360 & Golden Record
+# D1 · Customer 360 — el mismo código en Azure y en GCP
 
-Lakehouse de resolución de identidad sobre Databricks, con **promoción entre
-nubes por rama**: el mismo código se despliega en Azure Databricks o en GCP
-Databricks cambiando el target del bundle.
+Demo de portabilidad entre nubes. Un pipeline de resolución de identidad que
+se despliega en **Azure Databricks** o en **GCP Databricks** cambiando una
+palabra.
 
-Proyecto 1531. Los datos son sintéticos.
-
----
-
-## Cómo está organizado
-
-```
-notebooks/     Lo que corre. Cuatro etapas, ninguna sabe en qué nube está.
-jobs/          La constitución de cada job en JSON, forma nativa de la Jobs API.
-resources/     GENERADO desde jobs/. Está en .gitignore.
-scripts/       El generador y los validadores que corren en CI.
-databricks.yml El bundle. Aquí — y solo aquí — se nombran las dos nubes.
-```
-
-### Por qué los jobs están en JSON y no en el YAML del bundle
-
-Databricks Asset Bundles solo acepta YAML en su sección `include`:
-
-```
-Error: Files in the 'include' configuration section must be YAML files.
-```
-
-Pero la definición nativa de un job es JSON: es lo que devuelve
-`databricks jobs get` y lo que consume la Jobs API. Manteniendo los jobs en
-JSON, **lo versionado es exactamente el contrato de la API** — se puede
-exportar un job existente del workspace y versionarlo sin traducirlo a mano.
-
-`scripts/build_resources.py` es el puente: envuelve cada JSON en la estructura
-`resources.jobs.<clave>` que el bundle espera. Corre en CI antes de cada
-deploy. La fuente de verdad son los JSON; `resources/` es artefacto.
+Proyecto 1531. Datos sintéticos.
 
 ---
 
-## El pipeline
+## La idea en una frase
 
-| Etapa | Notebook | Qué hace |
-|---|---|---|
-| **00** | `00_generar_datos_sinteticos.py` | Reproduce las 2 fuentes de D1 con sus patologías: cédulas mal digitadas en caja, valores centinela, correos distintos por canal, y ~35% de personas comprando en ambos canales |
-| **01** | `01_silver_identidad.py` | Normaliza los 5 atributos y tipifica en válida / no identificado / inválida. Ningún registro se descarta |
-| **02** | `02_vault_golden_record.py` | Bloqueo, motor de 12 reglas, componentes conectados, Golden Record con llave estable |
-| **03** | `03_gold_customer360.py` | Customer 360, cobertura, 8 features punto-en-tiempo y las métricas certificadas |
+> En una migración de nube, la pregunta no es cuánto tardamos en copiar.
+> Es **qué parte del sistema sabe en qué nube está**.
 
-El job `99_pipeline_completo` los encadena. Es el que se reejecuta en GCP para
-producir el Golden Record que se compara contra el de Azure.
+En este repo esa parte son **2 líneas**, y están las dos en `databricks.yml`.
+Todo lo demás — los notebooks, el job, las reglas de identidad — no sabe
+dónde corre.
 
-### Las tres decisiones que hay que poder defender
-
-1. **Bloqueo antes de comparar.** Con 25 M de identidades, comparar todos
-   contra todos son 3·10¹⁴ pares. Solo se comparan registros que comparten
-   alguna llave de bloqueo.
-2. **Las reglas viven fuera del código**, en `jobs/reglas_identidad.json`.
-   Desactivar una y reejecutar no requiere desplegar.
-3. **La llave de cliente es un hash determinista**, no un autoincremental. Por
-   eso sobrevive a un reproceso y a un cambio de nube — que es lo que hace
-   posible comparar los dos entornos.
-
----
-
-## Promoción
-
-```
-develop  ──push──>  target dev  ──>  Azure Databricks
-   │
-   └── merge ──>  main  ──push──>  target gcp  ──>  GCP Databricks
-```
-
-Promover el POC de Azure a GCP no es un proyecto de migración: es un merge de
-`develop` a `main`. El comando es idéntico, solo cambia el target:
+Compruébalo:
 
 ```bash
-databricks bundle deploy -t dev
+bash scripts/verificar_portabilidad.sh
+```
+
+---
+
+## Estructura
+
+```
+notebooks/     01 genera las 2 fuentes · 02 produce el Golden Record
+jobs/          la definición del job en JSON + las reglas de identidad
+scripts/       el generador y el verificador de portabilidad
+databricks.yml los dos targets. Aquí, y solo aquí, se nombran las nubes.
+```
+
+`resources/` se genera desde `jobs/` y está en `.gitignore`.
+
+---
+
+## Cómo se mueve de Azure a GCP
+
+**A mano:**
+
+```bash
+databricks bundle deploy -t azure
 databricks bundle deploy -t gcp
 ```
 
-En un proyecto normal estos targets serían `dev` / `qa` / `prd`. Aquí
-representan las dos nubes, porque el POC tiene un único ambiente por nube.
+**Por pipeline** — promoción por rama:
+
+```
+develop ──push──> target azure ──> Azure Databricks
+   │
+   └── merge ──> main ──push──> target gcp ──> GCP Databricks
+```
+
+Mover el POC entre nubes es un merge.
+
+---
+
+## Por qué funciona
+
+Tres decisiones, y sin ellas el demo no se sostiene:
+
+**1. Nada se direcciona por ruta física.** Los notebooks usan
+`catálogo.esquema.tabla`. Unity Catalog resuelve dónde vive esa tabla — ADLS
+Gen2 en Azure, Cloud Storage en GCP. El código nunca lo sabe.
+
+**2. Las reglas de identidad viven fuera del código**, en
+`jobs/reglas_identidad.json`. Activar o desactivar una regla y reejecutar no
+requiere desplegar nada. El archivo viaja a GCP como un archivo más.
+
+**3. La llave de cliente es un hash determinista**, no un autoincremental. La
+misma persona obtiene la misma llave en las dos nubes — que es exactamente lo
+que permite comparar las dos corridas y demostrar que la migración no cambió
+el resultado.
+
+---
+
+## Lo que cambia de verdad al migrar
+
+| Azure | GCP |
+|---|---|
+| ADLS Gen2 | Cloud Storage |
+| Access Connector (identidad administrada) | Service Account **generada por Databricks** |
+| Key Vault | Secret Manager |
+| NAT Gateway + IP pública | Cloud NAT + IP reservada |
+| Unity Catalog · Delta Lake · Spark | **Idéntico** |
+
+Un detalle que atrapa a quien porta este tipo de infraestructura: en Azure
+**tú** creas la identidad y le pasas su id a Databricks; en GCP **Databricks**
+genera la service account y tú le asignas los roles IAM. La flecha apunta al
+revés.
 
 ---
 
@@ -87,52 +99,36 @@ representan las dos nubes, porque el POC tiene un único ambiente por nube.
 
 ```bash
 python scripts/build_resources.py     # jobs/*.json -> resources/*.yml
-python scripts/validar_reglas.py      # valida el catálogo de identidad
 bash scripts/verificar_portabilidad.sh
-databricks bundle validate -t dev
+databricks bundle validate -t azure
 ```
 
-Sin un workspace configurado, `bundle validate` resuelve todo el YAML y falla
-al autenticarse. Eso es lo esperado.
+Sin workspace configurado, `bundle validate` resuelve todo el YAML y falla al
+autenticarse. Es lo esperado.
 
-### Windows
+**Windows:** `python` en el PATH suele resolver al stub del Microsoft Store.
+Invoca el intérprete real por ruta completa si los scripts no arrancan.
 
-`python` en el PATH suele resolver al stub del Microsoft Store. Invoca el
-intérprete real por ruta completa si los scripts no arrancan.
+### Por qué los jobs están en JSON
 
----
+Databricks Asset Bundles solo acepta YAML en `include`:
 
-## Lo que el CI verifica
+```
+Error: Files in the 'include' configuration section must be YAML files.
+```
 
-`scripts/build_resources.py --check` no solo convierte: **valida**. Y los
-validadores están probados en negativo — cada uno de estos casos corta el
-build:
-
-| Caso | Quién lo atrapa |
-|---|---|
-| Job que depende de una tarea que no existe | `build_resources` |
-| Job que usa un `job_cluster_key` no declarado | `build_resources` |
-| Notebook referenciado que no está en el repo | `build_resources` |
-| Campo que la Jobs API no reconoce | `build_resources` |
-| Dos reglas con el mismo `rank` | `validar_reglas` |
-| Condición que usa una columna inexistente | `validar_reglas` |
-| Umbral fuera de `[0,1]` | `validar_reglas` |
-| Una ruta `abfss://` dentro de un notebook | `verificar_portabilidad` |
-
-El caso del `rank` duplicado merece explicación: si dos reglas comparten rank,
-cuál gana depende del orden de las filas, y Spark no lo garantiza. El Golden
-Record dejaría de ser reproducible entre corridas — y sin reproducibilidad, la
-comparación entre nubes no significa nada.
+Pero la definición nativa de un job es JSON — es lo que devuelve
+`databricks jobs get`. Manteniéndolos en JSON, lo versionado es exactamente el
+contrato de la API. `scripts/build_resources.py` hace el puente, y de paso
+valida: dependencias que no existen, clusters no declarados, notebooks
+faltantes y campos que la API no reconoce cortan el build.
 
 ---
 
-## Secrets que espera GitHub Actions
+## Secrets para GitHub Actions
 
-| Secret | Para qué |
-|---|---|
-| `DATABRICKS_HOST_AZURE` | URL del workspace de Azure |
-| `DATABRICKS_HOST_GCP` | URL del workspace de GCP |
-| `DATABRICKS_CLIENT_ID` | Service principal |
-| `DATABRICKS_CLIENT_SECRET` | Service principal |
+`DATABRICKS_HOST_AZURE` · `DATABRICKS_HOST_GCP` · `DATABRICKS_CLIENT_ID` ·
+`DATABRICKS_CLIENT_SECRET`
 
-Los hosts no se versionan: en `databricks.yml` van como placeholders.
+Sin ellos, CI valida igual lo que no necesita workspace, y Deploy se omite con
+un mensaje que dice qué falta.

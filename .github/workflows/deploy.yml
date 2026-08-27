@@ -1,7 +1,7 @@
 # Despliegue por promoción de rama.
 #
-#     push a develop  ->  target dev  (Azure Databricks)
-#     push a main     ->  target gcp  (GCP Databricks)
+#     push a develop  ->  target azure  (Azure Databricks)
+#     push a main     ->  target gcp    (GCP Databricks)
 #
 # El punto para la reunión con infraestructura: promover el POC de Azure a GCP
 # no es un proyecto de migración. Es un merge de develop a main.
@@ -19,7 +19,7 @@ on:
         description: Target al que desplegar
         required: true
         type: choice
-        options: [dev, gcp]
+        options: [azure, gcp]
       ejecutar_pipeline:
         description: Ejecutar el pipeline completo después de desplegar
         type: boolean
@@ -46,7 +46,7 @@ jobs:
           elif [ "${{ github.ref_name }}" = "main" ]; then
             TARGET="gcp"
           else
-            TARGET="dev"
+            TARGET="azure"
           fi
           NUBE=$([ "$TARGET" = "gcp" ] && echo "GCP Databricks" || echo "Azure Databricks")
           echo "target=$TARGET" >> "$GITHUB_OUTPUT"
@@ -58,7 +58,7 @@ jobs:
       # un `if` a nivel de job.
       - id: credenciales
         env:
-          HOST: ${{ steps.decidir.outputs.target == 'dev' && secrets.DATABRICKS_HOST_AZURE || secrets.DATABRICKS_HOST_GCP }}
+          HOST: ${{ steps.decidir.outputs.target == 'azure' && secrets.DATABRICKS_HOST_AZURE || secrets.DATABRICKS_HOST_GCP }}
           CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
         run: |
@@ -106,14 +106,14 @@ jobs:
       # El comando es idéntico para las dos nubes; solo cambia el target.
       - name: databricks bundle deploy
         env:
-          DATABRICKS_HOST: ${{ needs.resolver.outputs.target == 'dev' && secrets.DATABRICKS_HOST_AZURE || secrets.DATABRICKS_HOST_GCP }}
+          DATABRICKS_HOST: ${{ needs.resolver.outputs.target == 'azure' && secrets.DATABRICKS_HOST_AZURE || secrets.DATABRICKS_HOST_GCP }}
           DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
           DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
         run: databricks bundle deploy -t ${{ needs.resolver.outputs.target }}
 
       - name: Resumen de lo desplegado
         env:
-          DATABRICKS_HOST: ${{ needs.resolver.outputs.target == 'dev' && secrets.DATABRICKS_HOST_AZURE || secrets.DATABRICKS_HOST_GCP }}
+          DATABRICKS_HOST: ${{ needs.resolver.outputs.target == 'azure' && secrets.DATABRICKS_HOST_AZURE || secrets.DATABRICKS_HOST_GCP }}
           DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
           DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
         run: |
@@ -128,7 +128,7 @@ jobs:
       - name: Ejecutar el pipeline completo
         if: inputs.ejecutar_pipeline || needs.resolver.outputs.target == 'gcp'
         env:
-          DATABRICKS_HOST: ${{ needs.resolver.outputs.target == 'dev' && secrets.DATABRICKS_HOST_AZURE || secrets.DATABRICKS_HOST_GCP }}
+          DATABRICKS_HOST: ${{ needs.resolver.outputs.target == 'azure' && secrets.DATABRICKS_HOST_AZURE || secrets.DATABRICKS_HOST_GCP }}
           DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
           DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-        run: databricks bundle run 99_pipeline_completo -t ${{ needs.resolver.outputs.target }}
+        run: databricks bundle run customer360 -t ${{ needs.resolver.outputs.target }}
